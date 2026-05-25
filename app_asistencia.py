@@ -125,3 +125,18 @@ if len(st.session_state.asistentes) > 0:
         mime="text/csv",
         use_container_width=True
     )
+
+# --- MEJORA SOLICITADA: BOTÓN DE REINICIO ---
+st.write("---")
+st.write("### ⚙️ Administración del Sistema")
+if st.button("Reinicio", type="primary", use_container_width=True):
+    # Limpiar datos en el estado de la sesión
+    st.session_state.asistentes = []
+    st.session_state.contador = 0
+    
+    # Eliminar el archivo físico de respaldo si existe
+    if os.path.exists(ARCHIVO_RESPALDO):
+        os.remove(ARCHIVO_RESPALDO)
+        
+    st.toast("Base de datos y contador reiniciados correctamente. 🔄", icon="🗑️")
+    st.rerun()

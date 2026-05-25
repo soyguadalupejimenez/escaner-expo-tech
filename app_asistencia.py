@@ -40,31 +40,34 @@ if img_file_buffer is not None:
             ["Padre de Familia / Invitado", "Alumno"]
         )
         
-        # --- PREGUNTA 2: CANTIDAD DE PERSONAS ---
-        cantidad_personas = st.number_input(
-            "¿Cuántas personas ingresan con este pase?", 
-            min_value=1, max_value=50, value=1, step=1
-        )
-        
         # Variables por defecto
         nombre_alumno = "N/A"
         grupo_alumno = "N/A"
         puede_registrar = True
         
-        # --- LÓGICA DINÁMICA SI ES ALUMNO ---
-        if tipo_asistente == "Alumno":
+        # --- LÓGICA CONDICIONAL DEPENDIENDO DEL ROL ---
+        if tipo_asistente == "Padre de Familia / Invitado":
+            # Si es Padre, mostramos el selector de cantidad (del 1 al 50)
+            cantidad_personas = st.number_input(
+                "¿Cuántas personas ingresan con este pase?", 
+                min_value=1, max_value=50, value=1, step=1
+            )
+        else:
+            # Si es Alumno, se fuerza a 1 automáticamente y no se le pregunta nada en pantalla
+            cantidad_personas = 1
+            
             st.info("📝 Por favor, introduce los datos del alumno para continuar.")
             nombre_alumno = st.text_input("Nombre Completo del Alumno:")
             grupo_alumno = st.text_input("Grupo (Ej. 4401, 4602):")
             
-            # Si los campos están vacíos, no dejamos que registre todavía
+            # Bloquear registro si los campos están vacíos
             if not nombre_alumno or not grupo_alumno:
                 puede_registrar = False
                 st.warning("⚠️ Debes rellenar el Nombre y el Grupo para poder registrar al alumno.")
         
-        # Botón para confirmar el acceso (se bloquea si es alumno y no ha escrito sus datos)
+        # Botón para confirmar el acceso
         if st.button("Registrar Entrada", disabled=not puede_registrar):
-            # Sumamos la cantidad seleccionada al contador global acumulado
+            # Sumamos la cantidad calculada al contador global acumulado
             st.session_state.contador += cantidad_personas
             
             # --- ZONA HORARIA TIEMPO REAL (ECATEPEC / CDMX) ---
@@ -73,7 +76,7 @@ if img_file_buffer is not None:
             hora_registro = hora_actual_mexico.strftime("%H:%M:%S")
             fecha_registro = hora_actual_mexico.strftime("%Y-%m-%d")
             
-            # Guardamos los datos en la lista incluyendo los nuevos campos
+            # Guardamos los datos en la lista
             st.session_state.asistentes.append({
                 "N° Registro": len(st.session_state.asistentes) + 1,
                 "Fecha": fecha_registro,
@@ -92,10 +95,8 @@ if img_file_buffer is not None:
 st.write("---")
 st.subheader("Métricas en Tiempo Real")
 
-# Muestra el acumulado real de personas totales que han cruzado la puerta
 st.metric(label="Total de Personas que Entraron", value=st.session_state.contador)
 
-# Si ya hay registros, mostramos la tabla con la nueva estructura
 if len(st.session_state.asistentes) > 0:
     df_asistencia = pd.DataFrame(st.session_state.asistentes)
     
@@ -105,16 +106,12 @@ if len(st.session_state.asistentes) > 0:
     st.write("---")
     st.write("### ⬇️ Guardar Reporte Final")
     
-    # Preparamos los datos en formato CSV compatible al 100% con Excel (con soporte de acentos)
     csv_data = df_asistencia.to_csv(index=False).encode('utf-8-sig')
     
-    # Botón para descargar el reporte a tu dispositivo
     st.download_button(
         label="💾 Guardar lista de asistencia",
         data=csv_data,
-        file_name=f"Asistencia_ExpoTech_Dinamica_{datetime.date.today()}.csv",
+        file_name=f"Asistencia_ExpoTech_Filtro_{datetime.date.today()}.csv",
         mime="text/csv",
         use_container_width=True
     )
-    
-    st.info("💡 La tabla descargada incluirá automáticamente las columnas de 'Nombre Alumno' y 'Grupo'. Para los Padres de Familia, estos campos se llenarán automáticamente con 'N/A'.")
